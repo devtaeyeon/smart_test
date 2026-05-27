@@ -1,0 +1,30 @@
+version: '3'
+services:
+  api:
+    restart: "no"
+    image: HQGGBPVIP1:22222/cgswgd/cgswgd_aos_api:1.0.0
+    container_name: CGSWGC_AOS_API_001
+    volumes:
+      - /workspace/container_volumes/aos_api:/home/app
+      - /workspace/container_volumes/logs/aos_api:/home/log
+      - /workspace/container_volumes/TZ/localtime:/etc/localtime
+      - /workspace/container_volumes/TZ/timezone:/etc/timezone
+    #depends_on:
+    #  - mariadb_1
+    network_mode: host
+    #privileged: true
+
+  web:
+    restart: "no"
+    image: HQGGBPVIP1:22222/cgswgd/cgswgd_aos_web:1.0.0
+    container_name: CGSWGC_AOS_WEB_001
+    volumes:
+      - /workspace/container_volumes/aos_web/dist:/home/app
+      - /workspace/container_volumes/aos_web/conf/default.conf:/etc/nginx/conf.d/default.conf
+      - /workspace/container_volumes/aos_web/conf/nginx.conf:/etc/nginx/nginx.conf
+      - /workspace/container_volumes/logs/aos_web:/home/log
+      - /workspace/container_volumes/TZ/localtime:/etc/localtime
+      - /workspace/container_volumes/TZ/timezone:/etc/timezone
+    network_mode: host
+    #privileged: true
+

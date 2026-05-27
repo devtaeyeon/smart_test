@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <springProperty name="LOG_PATH" source="logging.path" />
+  <springProperty name="LOG_FILE_NAME" source="logging.file.name" />
+  <springProperty name="LOG_FILE_MAX_SIZE" source="logging.file.max-size" />
+  <springProperty name="LOG_FILE_MAX_HISTORY" source="logging.file.max-history" />
+  <springProperty name="LOG_LEVEL_ROOT" source="logging.level.root" />
+  <springProperty name="LOG_PATTERN" source="logging.pattern.console" />
+  
+  <!-- 로컬 -->
+  <springProfile name="local">
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+        <pattern>${LOG_PATTERN}</pattern>
+      </encoder>
+    </appender>
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender" />
+    <logger name="jdbc" level="OFF"/>
+    <logger name="jdbc.sqlonly" level="INFO"/>
+    <logger name="jdbc.sqltiming" level="ERROR"/>
+    <logger name="jdbc.audit" level="OFF"/>
+    <logger name="jdbc.resultset" level="ERROR"/>
+    <logger name="jdbc.resultsettable" level="ERROR"/>
+    <logger name="jdbc.connection" level="OFF"/>
+  </springProfile>
+  <!-- 로컬 -->
+  
+  <!-- 개발, 운영 -->
+  <springProfile name="dev,real">
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+        <pattern>${LOG_PATTERN}</pattern>
+      </encoder>
+    </appender>
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
+      <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+          <pattern>%d{yyyyMMdd HH:mm:ss.SSS} [%thread] %-3level %logger{5} - %msg %n</pattern>
+        </layout>
+      </encoder>
+      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <fileNamePattern>${LOG_PATH}/${LOG_FILE_NAME}_%d{yyMMdd}_%i.log</fileNamePattern>
+        <maxHistory>${LOG_FILE_MAX_HISTORY}</maxHistory>
+        <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+          <maxFileSize>${LOG_FILE_MAX_SIZE}</maxFileSize>
+        </timeBasedFileNamingAndTriggeringPolicy>
+      </rollingPolicy>
+    </appender>
+
+    <logger name="jdbc" level="OFF" />
+  	<logger name="jdbc.sqlonly" level="ERROR" />
+  	<logger name="jdbc.sqltiming" level="ERROR" />
+  	<logger name="jdbc.audit" level="OFF" />
+  	<logger name="jdbc.resultset" level="OFF" />
+  	<logger name="jdbc.resultsettable" level="ERROR" />
+  	<logger name="jdbc.connection" level="OFF" />
+  </springProfile>
+  <!-- 개발, 운영 -->
+
+  <root level="${LOG_LEVEL_ROOT}">
+    <appender-ref ref="STDOUT" />
+    <appender-ref ref="FILE" />
+  </root>
+</configuration>

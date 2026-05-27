@@ -1,0 +1,97 @@
+package co.irexnet.waio.WAIO_ServerAgent.dao;
+
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import co.irexnet.waio.WAIO_ServerAgent.ai_dto.AiDisinfectionRealtimeDTO;
+import co.irexnet.waio.WAIO_ServerAgent.util.CommonValue;
+
+@Repository
+public class AiDisinfectionRealtimeDAOImpl implements IAiDisinfectionRealtimeDAO
+{
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+
+    @Override
+    public List<AiDisinfectionRealtimeDTO> select(Date start_time, Date end_time, int processStep, int disinfectionIndex)
+    { 
+
+        String strQuery = "SELECT UPD_TI, AI_OPR, IN_VAL, OUT_VAL"
+        		+ ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_D_RESIDUAL_CL')) AS g_d_residual_cl"
+        		+ ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_E_RESIDUAL_CL')) AS g_e_residual_cl"
+        		+ ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_PRE_CHOL_RATE')) AS g_pre_chol_rate"
+        		+ ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_POST_CHOL_RATE')) AS g_post_chol_rate"
+        		+ ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_H_IN_RESIDUAL_CL')) AS g_h_in_residual_cl"
+        		+ ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_H_OUT_RESIDUAL_CL')) AS g_h_out_residual_cl"
+        		+ ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_H_RESIDUAL_CL')) AS g_h_residual_cl"
+        		+ ", JSON_UNQUOTE(JSON_EXTRACT(OUT_VAL, '$.AI_G_EVAP')) AS ai_g_pre_evaporation"
+        		+ ", JSON_UNQUOTE(JSON_EXTRACT(OUT_VAL, '$.AI_G_CHOL_RATE')) AS ai_g_chol_rate"
+        		+ ", JSON_UNQUOTE(JSON_EXTRACT(OUT_VAL, '$.AI_G_CORRECT_DEGREE')) AS ai_g_correct_degree"
+                + " FROM "
+                + getTableByProcessStep(processStep, disinfectionIndex) + 
+                " WHERE upd_ti > ? AND upd_ti <= ? ORDER BY upd_ti";
+        return jdbcTemplate.query(
+                strQuery,
+                new Object[]{start_time, end_time},
+                new BeanPropertyRowMapper<>(AiDisinfectionRealtimeDTO.class)
+        );
+    }
+
+    @Override
+    public AiDisinfectionRealtimeDTO select(int processStep, int disinfectionIndex)
+    {
+        String strQuery = "SELECT UPD_TI, AI_OPR, IN_VAL, OUT_VAL"
+            + ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_D_RESIDUAL_CL')) AS g_d_residual_cl"
+            + ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_E_RESIDUAL_CL')) AS g_e_residual_cl"
+            + ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_PRE_CHOL_RATE')) AS g_pre_chol_rate"
+            + ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_POST_CHOL_RATE')) AS g_post_chol_rate"
+            + ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_H_IN_RESIDUAL_CL')) AS g_h_in_residual_cl"
+            + ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_H_OUT_RESIDUAL_CL')) AS g_h_out_residual_cl"
+            + ", JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_H_RESIDUAL_CL')) AS g_h_residual_cl"
+            + ", IFNULL(JSON_UNQUOTE(JSON_EXTRACT(OUT_VAL, '$.G_ELAPSED_TIME')), 0) AS g_elapsed_time"
+            + ", IFNULL(JSON_UNQUOTE(JSON_EXTRACT(IN_VAL, '$.G_TEI')), 0) AS g_tei"
+            + ", IFNULL(JSON_UNQUOTE(JSON_EXTRACT(OUT_VAL, '$.AI_G_EVAP')), 0) AS ai_g_pre_evaporation"
+            + ", IFNULL(JSON_UNQUOTE(JSON_EXTRACT(OUT_VAL, '$.AI_G_CHOL_RATE')), 0) AS ai_g_chol_rate"
+            + ", IFNULL(JSON_UNQUOTE(JSON_EXTRACT(OUT_VAL, '$.AI_G_CORRECT_DEGREE')), 0) AS ai_g_correct_degree"
+            + ", IFNULL(JSON_UNQUOTE(JSON_EXTRACT(OUT_VAL, '$.G_PUMP_1_RUN')), 0) AS g_pump_1_run"
+            + ", IFNULL(JSON_UNQUOTE(JSON_EXTRACT(OUT_VAL, '$.G_PUMP_2_RUN')), 0) AS g_pump_2_run"
+            + " FROM "
+            + getTableByProcessStep(processStep, disinfectionIndex) + " ORDER BY upd_ti DESC LIMIT 1";
+        try
+        {
+            return jdbcTemplate.queryForObject(strQuery, new BeanPropertyRowMapper<>(AiDisinfectionRealtimeDTO.class));
+        }
+        catch(EmptyResultDataAccessException e)
+        {
+            return null;
+        }
+    }
+
+    @Override
+    public int delete(Date upd_ti, int processStep, int disinfectionIndex)
+    {
+        String strQuery = "DELETE FROM " + getTableByProcessStep(processStep, disinfectionIndex) + " WHERE upd_ti < ?";
+        return jdbcTemplate.update(strQuery, upd_ti);
+    }
+    
+    public String getTableByProcessStep(int processStep, int disinfectionIndex) {
+        String tableNm = "";
+        if(processStep == 1 && disinfectionIndex == CommonValue.DISINFECTION_PRE_STEP) { // 1단계공업 전차염
+            tableNm = "TB_AI_PRE_G1_RT";
+        } else if(processStep == 2 && disinfectionIndex == CommonValue.DISINFECTION_PRE_STEP) { // 2단계생활 전차염
+            tableNm = "TB_AI_PRE_G2_RT";
+        } else if(processStep == 2 && disinfectionIndex == CommonValue.DISINFECTION_POST_STEP) { // 2단계생활 후차염
+            tableNm = "TB_AI_POST_G2_RT";
+        } else if(processStep == 3 && disinfectionIndex == CommonValue.DISINFECTION_PRE_STEP) { // 3단계공업 전차염
+            tableNm = "TB_AI_PRE_G3_RT";
+        }
+        return tableNm;
+    }
+
+}

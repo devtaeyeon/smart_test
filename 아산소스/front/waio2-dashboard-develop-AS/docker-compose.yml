@@ -1,0 +1,11 @@
+version: '3'
+services:
+  caswgd_aos_web:
+    restart: always
+    container_name: CASWGC_AOS_WEB_001
+    image: hqggbpvip1:22222/caswgd/caswgd_aos_web:1.0.0
+    volumes:
+      - /workspace/container_volumes/aos_web/dist:/usr/share/nginx/html
+      - /workspace/container_volumes/aos_web/conf:/etc/nginx/conf.d
+      - /workspace/container_volumes/logs/aos_web:/var/log/nginx
+    network_mode: host

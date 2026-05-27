@@ -1,0 +1,113 @@
+spring:
+  profiles:
+    active: real
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    #driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:mariadb://smart-vip:3306/WATER_GS?passwordCharacterEncoding=UTF-8&autoReconnect=true&useSSL=false&rewriteBatchedStatements=true
+    #url: jdbc:log4jdbc:mariadb://192.168.100.126:3306/WATER_GS?passwordCharacterEncoding=UTF-8&autoReconnect=true&useSSL=false&rewriteBatchedStatements=true
+    username: root
+    password: water2022
+    hikari:
+      idle-timeout: 10000
+      max-lifetime: 420000
+      connection-timeout: 5000
+      validation-timeout: 5000
+
+logging:
+  #  path: ./logs
+  file:
+    max-history: 7
+    max-size: 10MB
+    name: water_gs
+  level:
+    root: info
+    #    org.apache.http: debug
+    org.apache.http: error
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%t] %-5level [%logger{36}:%L] - %msg%n"
+    file: "%d [%t] %5p [%c{1.}:%L] %m%n"
+
+properties:
+  # delegate:
+  #   address: 220.123.184.52
+  #   version: "@project.version@"
+  authentication:
+    expiration: 30 # minute, minimum:1
+    key: waio
+    resource-monitor-token: resource-monitoring
+    iwater-token: iWater
+    internal-token: internal
+  check-process:
+    period: 600000 # millisecond, 1minute = 60000
+  scada-check:
+    period: 60000 # millisecond, 1minute = 60000
+  analysis-check:
+    period: 60000 # millisecond, 1minute = 60000
+  daq_check:
+    period: 60000 # millisecond, 1minute = 60000
+  visualize-check:
+    period: 60000 # millisecond, 1minute = 60000
+    address: 220.123.184.53
+    port: 18081
+  system-check:
+    period: 60000 # millisecond, 1minute = 60000
+    reference: 300000 # millisecond, 1minute = 60000
+  control-check:
+    period: 30000 # millisecond, 1minute = 60000
+  alarm-check:
+    period: 30000 # millisecond, 1minute = 60000
+  aiopr-check:
+    period: 60000 # millisecond, 1minute = 60000
+  storage: 36 # monthly, Save Database Table record storage duration.
+  receiving-data: 2 # monthly, Save Database Table record storage duration.
+
+kafka:
+  topic:
+    dpf_scada1: CGSWGS1_data
+    dpf_scada2: CGSWGS2_data
+    dpf_taginfo1: CGSWGS1_taginfo
+    dpf_taginfo2: CGSWGS2_taginfo
+
+---
+#로컬
+spring:
+  profiles: local
+server:
+  #port: 8091
+  port: 38095
+properties:
+  delegate:
+    address: 127.0.0.1
+    local_address: localhost
+    version: "@project.version@"
+logging:
+  path: ./logs
+---
+# 개발
+spring:
+  profiles: dev
+server:
+  #port: 28081
+  port: 18081
+properties:
+  delegate:
+    address: smart2
+    local_address: localhost
+    version: "@project.version@"
+logging:
+  path: /home/log
+---
+# 운영
+spring:
+  profiles: real
+server:
+#  port: 38080
+   port: 38081
+properties:
+  delegate:
+    address: waio-portal-vip
+    local_address: localhost
+    version: "@project.version@"
+logging:
+  path: /home/log
